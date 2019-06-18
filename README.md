@@ -1,7 +1,7 @@
 Variant-disease tables
 ======================
 
-This repositroy contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
+This repository contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
 
 Changes made (Jan 2019):
 - All outputs in Apache Parquet format
@@ -22,28 +22,81 @@ Changes made (Jan 2019):
 
 ### Usage
 
+#### 1. Alter configuration file
+
 ```
-# Install dependencies into isolated environment
-conda env create -n v2d_data --file environment.yaml
+    nano config.yaml
+```
 
-# Activate environment
-source activate v2d_data
+#### 2. Authenticate with Google Cloud
 
-# Alter configuration file
-nano config.yaml
+##### a. Interactive login
 
-# Authenticate google cloud storage
-gcloud auth application-default login
+You can login with a google user through a web browser. To initiate such login call:
 
-# Execute workflow (locally)
-version_date=`date +%y%m%d`
-cores=3
-snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
-snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
-snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+```
+    gcloud auth application-default login
+```
 
-# Dry-run gsutil rsync to copy from staging to live
-gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
+##### b. Authenticate with private key
+
+Alternatively, you can use a service account.
+
+First, you have to create a service account with the Google web console or with [CLI](https://cloud.google.com/iam/docs/creating-managing-service-accounts). Make sure you gave just enough permissions for the service account.
+
+Generate a private key file:
+```
+    gcloud iam service-accounts keys create keys.json --iam-account=<service-account-name>@<project-name>.iam.gserviceaccount.com
+```
+
+You can use the key file with Google CLI commands by specifying `GOOGLE_APPLICATION_CREDENTIALS` environment variable that points to the private key.
+
+```
+    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/keys.json
+```
+
+#### 3. Activate conda environment
+
+##### a. On your machine
+
+**NOTE:** If you use your local environment you need to install Conda and Google Cloud SDK.
+
+```
+    # Install dependencies into isolated environment
+    conda env create -n v2d_data --file environment.yaml
+
+    # Activate environment
+    source activate v2d_data
+```
+
+#### b. Use Docker
+
+Build image and tag it with a name for convenience of calling later:
+
+```
+    docker build --tag otg-v2d .
+```
+
+Start a docker container in interactive mode.
+
+```
+    docker run --rm -it \
+        -v /path/to/keys.json:/keys.json \
+        -v /path/to/config.yaml:/v2d/config.yaml \
+        -e GOOGLE_APPLICATION_CREDENTIALS="/keys.json" \
+        otg-v2d
+```
+
+#### 4. Execute workflow
+
+```
+    ./run.sh
+```
+
+#### 5. Dry-run gsutil rsync to copy from staging to live
+
+```
+    gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
 ```
 
 ### Tables

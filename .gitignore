@@ -1,6 +1,7 @@
 .snakemake/
 tmp/
 output/
+keys.json
 
 
 # Created by https://www.gitignore.io/api/python
