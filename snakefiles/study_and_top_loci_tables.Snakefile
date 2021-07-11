@@ -66,7 +66,7 @@ rule annotate_gwas_cat_with_variant_ids:
         tmpdir + \
             '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
-        'python scripts/annotate_gwascat_varaintids.py '
+        'python scripts/annotate_gwascat_variantids.py '
         '--gwas {input.gwascat} '
         '--invar {input.invar} '
         '--out {output}'
